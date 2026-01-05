@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TO DO List — Unified (index2)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Attach the shared stylesheet for all pages -->
+  <link href="myself.css" rel="stylesheet" type="text/css" />
+  <!-- Keep Spry assets referenced (if available in project) for legacy menu behaviour -->
+  <script src="SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+  <link href="SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+  <style>
+    /* Small, page-specific overrides to ensure the merged content looks clean */
+    body { background-image: none; } /* prefer gradient from myself.css */
+    header { margin-top: 1.2rem; margin-bottom: .6rem; text-align: center; }
+    /* Ensure the original left/top menu looks tidy within the centered column */
+    #navbar { text-align: left; margin-bottom: 1rem; }
+    /* Hide any stray very long lists that would appear on the right-side in legacy pages */
+    .legacy-right-links { display: none !important; }
+    /* Make sure nested menus have visible dropdown behaviour */
+    .MenuBarHorizontal ul { display: none; position: absolute; z-index: 2010; background: rgba(255,255,255,0.98); padding: .4rem; border-radius: 8px; box-shadow: 0 6px 18px rgba(16,24,40,0.08); }
+    .MenuBarHorizontal li:hover > ul { display: block; }
+    .MenuBarHorizontal li { position: relative; }
+    /* Slight spacing for the cleaned content sections */
+    main .card { margin-bottom: 1rem; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-expand {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-expand:hover {
+            background: #2563eb;
+        }
+
+        .btn-collapse {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-collapse:hover {
+            background: #4b5563;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .info-box {
+            padding: 1rem;
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-box p {
+            font-size: 0.875rem;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .node {
+            margin: 0.5rem 0;
+        }
+
+        .node-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .toggle-icon {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .toggle-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .node-label {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+
+        .node-label.level-0 {
+            font-size: 1.25rem;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .children {
+            margin-left: 2rem;
+            margin-top: 0.5rem;
+            border-left: 2px solid #d1d5db;
+            padding-left: 1rem;
+            display: none;
+        }
+
+        .children.expanded {
+            display: block;
+        }
+
+        .color-0 { background: #3b82f6; }
+        .color-1 { background: #10b981; }
+        .color-2 { background: #8b5cf6; }
+        .color-3 { background: #f59e0b; }
+        .color-4 { background: #ec4899; }
+        .color-5 { background: #14b8a6; }
+        .color-6 { background: #6366f1; }
+        .color-7 { background: #eab308; }
+
+        .footer-note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 0.5rem;
+        }
+
+        .footer-note h3 {
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .footer-note p {
+            font-size: 0.875rem;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+        }
+ 
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><strong><u>Personal Dashboard </u></strong> : <strong>Mission & vision</strong></h1>
+  </header>
+
+  <main class="container" role="main">
+    <!-- TOP NAV: merged from original index.html. Dropdowns preserved. -->
+    <nav id="navbar" aria-label="Primary navigation">
+      <div class="container">
+        <div class="header">
+            <h3>vision & Mission</h3>
+            <p data-path-to-node="8,0">I exist to be the <strong data-path-to-node="8,0" data-index-in-node="19">Rock</strong> of security and the <strong data-path-to-node="8,0" data-index-in-node="44">River</strong> of opportunity for my family. For my wife and my three growing sons, I am an unbreakable provider and a loving guide. I show up with a body that is fit, a mind that is clear, and a heart that is resilientMy career in IT is my craft; I sharpen my skills with the precision of an expert and the curiosity of a student. I am a bridge-builder, connecting with professionals across the globe to create a future of abundance. I stand tall for my elderly parents and walk hand-in-hand with my bro and sis.</p>
+            <h1>&nbsp;</h1>
+            <div class="controls">
+                <button class="btn btn-expand" onClick="expandAll()">
+                    <span>+</span> Expand All                </button>
+                <button class="btn btn-collapse" onClick="collapseAll()">
+                    <span>-</span> Collapse All                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+          <div id="mindmap"></div>
+        </div>
+
+      </div>
+
+    <script>
+        var mindMapData = {
+            id: 'root',
+            label: 'SELF ORGANIZATION',
+            children: [
+                {
+                    id: 'work',
+                    label: 'WORK',
+                    children: [
+                        {
+                            id: 'jobSearch',
+                            label: 'JOB SEARCH',
+                            children: [
+                                {
+                                    id: 'basicInfo',
+                                    label: 'Basic Information',
+                                    children: [
+                                        { id: 'stepByStep', label: 'Step-by-step Procedure' },
+                                        { id: 'skillsImprovement', label: 'Tasks to Improve Skills' },
+                                        { id: 'vacancies', label: 'Number of Vacancies' },
+                                        { id: 'orgsProviding', label: 'Organizations Providing Jobs' },
+                                        { id: 'workFromHome', label: 'Work from Home' }
+                                    ]
+                                },
+                                {
+                                    id: 'modernStrategies',
+                                    label: 'Modern Job Search Strategies',
+                                    children: [
+                                        {
+                                            id: 'platforms',
+                                            label: 'Job Platforms and Boards',
+                                            children: [
+                                                { id: 'linkedin', label: 'LinkedIn Jobs' },
+                                                { id: 'indeed', label: 'Indeed' },
+                                                { id: 'glassdoor', label: 'Glassdoor' },
+                                                { id: 'naukri', label: 'Naukri.com' },
+                                                { id: 'angellist', label: 'AngelList (Startups)' },
+                                                { id: 'remote', label: 'Remote.co / We Work Remotely' },
+                                                { id: 'freelance', label: 'Upwork / Fiverr / Freelancer' },
+                                                { id: 'github', label: 'GitHub Jobs (Tech)' },
+                                                { id: 'stackoverflow', label: 'Stack Overflow Jobs' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'networking',
+                                            label: 'Professional Networking',
+                                            children: [
+                                                { id: 'linkedinNet', label: 'LinkedIn Networking and Engagement' },
+                                                { id: 'twitter', label: 'Twitter (X) - Tech Communities' },
+                                                { id: 'facebook', label: 'Facebook Groups' },
+                                                { id: 'meetups', label: 'Meetup.com Events' },
+                                                { id: 'conferences', label: 'Industry Conferences' },
+                                                { id: 'webinars', label: 'Webinars and Virtual Events' },
+                                                { id: 'alumninet', label: 'Alumni Networks' },
+                                                { id: 'referrals', label: 'Employee Referral Programs' },
+                                                { id: 'coldOutreach', label: 'Cold Outreach (Email/LinkedIn)' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'directApproach',
+                                            label: 'Direct Company Approach',
+                                            children: [
+                                                { id: 'careerPages', label: 'Company Career Pages' },
+                                                { id: 'dreamCompanies', label: 'Target Dream Companies List' },
+                                                { id: 'speculativeApp', label: 'Speculative Applications' },
+                                                { id: 'companyResearch', label: 'Company Research and Culture Fit' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'personalBrand',
+                                            label: 'Personal Branding',
+                                            children: [
+                                                { id: 'portfolio', label: 'Portfolio Website' },
+                                                { id: 'githubProfile', label: 'GitHub Profile Optimization' },
+                                                { id: 'blog', label: 'Technical Blog / Medium' },
+                                                { id: 'youtube', label: 'YouTube / Video Content' },
+                                                { id: 'openSource', label: 'Open Source Contributions' },
+                                                { id: 'certifications', label: 'Online Certifications Display' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'aiTools',
+                                            label: 'AI-Powered Tools',
+                                            children: [
+                                                { id: 'resumeOptimizer', label: 'Resume ATS Optimization' },
+                                                { id: 'coverLetter', label: 'AI Cover Letter Generators' },
+                                                { id: 'interviewPrep', label: 'AI Interview Preparation' },
+                                                { id: 'jobMatching', label: 'AI Job Matching Algorithms' },
+                                                { id: 'skillGap', label: 'Skill Gap Analysis Tools' }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: 'application',
+                                    label: 'Application Process',
+                                    children: [
+                                        {
+                                            id: 'resume',
+                                            label: 'Resume and CV',
+                                            children: [
+                                                { id: 'tailoredResume', label: 'Tailored Resumes per Job' },
+                                                { id: 'atsFormat', label: 'ATS-Friendly Format' },
+                                                { id: 'keywords', label: 'Keywords Optimization' },
+                                                { id: 'achievements', label: 'Quantifiable Achievements' },
+                                                { id: 'resumeVersions', label: 'Multiple Resume Versions' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'coverLetters',
+                                            label: 'Cover Letters',
+                                            children: [
+                                                { id: 'customized', label: 'Customized per Company' },
+                                                { id: 'templates', label: 'Template Library' },
+                                                { id: 'storytelling', label: 'Storytelling Approach' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'interviewPreparation',
+                                            label: 'Interview Preparation',
+                                            children: [
+                                                { id: 'commonQuestions', label: 'Common Interview Questions' },
+                                                { id: 'technical', label: 'Technical Questions (Coding)' },
+                                                { id: 'behavioral', label: 'Behavioral (STAR Method)' },
+                                                { id: 'mockInterview', label: 'Mock Interviews' },
+                                                { id: 'companySpecific', label: 'Company-Specific Research' },
+                                                { id: 'questions', label: 'Questions to Ask Interviewer' }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: 'tracking',
+                                    label: 'Tracking and Management',
+                                    children: [
+                                        {
+                                            id: 'applicationTracker',
+                                            label: 'Application Tracker',
+                                            children: [
+                                                { id: 'spreadsheet', label: 'Spreadsheet Database' },
+                                                { id: 'jobApplicationStatus', label: 'Status (Applied/Interview/Offer)' },
+                                                { id: 'dateApplied', label: 'Date Applied' },
+                                                { id: 'followUpDate', label: 'Follow-up Dates' },
+                                                { id: 'contactPerson', label: 'Contact Person Details' },
+                                                { id: 'salaryRange', label: 'Salary Range' },
+                                                { id: 'location', label: 'Job Location' },
+                                                { id: 'notes', label: 'Notes and Insights' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'calendar',
+                                            label: 'Calendar and Scheduling',
+                                            children: [
+                                                { id: 'interviewSchedule', label: 'Interview Schedule' },
+                                                { id: 'deadlines', label: 'Application Deadlines' },
+                                                { id: 'followUps', label: 'Follow-up Reminders' },
+                                                { id: 'networkingEvents', label: 'Networking Event Dates' },
+                                                { id: 'dailyGoals', label: 'Daily Application Goals' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'followUp',
+                                            label: 'Follow-up Strategy',
+                                            children: [
+                                                { id: 'thankYou', label: 'Thank You Emails' },
+                                                { id: 'weeklyFollowUp', label: 'Weekly Status Check-ins' },
+                                                { id: 'postInterview', label: 'Post-Interview Follow-up' },
+                                                { id: 'reconnect', label: 'Reconnect with Old Contacts' }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: 'skillDevelopment',
+                                    label: 'Continuous Skill Development',
+                                    children: [
+                                        {
+                                            id: 'techSkills',
+                                            label: 'Technical Skills',
+                                            children: [
+                                                { id: 'programming', label: 'Programming (C++, Java, Python)' },
+                                                { id: 'webDev', label: 'Web Developer (Frontend/Backend)' },
+                                                { id: 'webDesign', label: 'Web Designer (UI/UX)' },
+                                                { id: 'autoCAD', label: 'AutoCAD' },
+                                                { id: 'graphics', label: 'Graphics (Photoshop, Flash)' },
+                                                { id: 'dataScience', label: 'Data Science and Analytics' },
+                                                { id: 'cloudComputing', label: 'Cloud Computing (AWS, Azure)' },
+                                                { id: 'devops', label: 'DevOps and CI/CD' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'softSkills',
+                                            label: 'Soft Skills',
+                                            children: [
+                                                { id: 'communication', label: 'Communication' },
+                                                { id: 'leadership', label: 'Leadership' },
+                                                { id: 'problemSolving', label: 'Problem Solving' },
+                                                { id: 'timeManagement', label: 'Time Management' },
+                                                { id: 'teamwork', label: 'Teamwork and Collaboration' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'onlineCourses',
+                                            label: 'Online Learning Platforms',
+                                            children: [
+                                                { id: 'coursera', label: 'Coursera' },
+                                                { id: 'udemy', label: 'Udemy' },
+                                                { id: 'linkedinlearning', label: 'LinkedIn Learning' },
+                                                { id: 'pluralsight', label: 'Pluralsight' },
+                                                { id: 'freecodecamp', label: 'freeCodeCamp' },
+                                                { id: 'codecademy', label: 'Codecademy' }
+                                            ]
+                                        },
+                                        {
+                                            id: 'certifications',
+                                            label: 'Professional Certifications',
+                                            children: [
+                                                { id: 'awsCert', label: 'AWS Certifications' },
+                                                { id: 'googleCert', label: 'Google Certifications' },
+                                                { id: 'microsoftCert', label: 'Microsoft Certifications' },
+                                                { id: 'pmp', label: 'PMP / Agile Certifications' },
+                                                { id: 'industrySpecific', label: 'Industry-Specific Certs' }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: 'marketResearch',
+                                    label: 'Job Market Research',
+                                    children: [
+                                        { id: 'industryTrends', label: 'Industry Trends Analysis' },
+                                        { id: 'salaryBenchmark', label: 'Salary Benchmarking' },
+                                        { id: 'competitorCompanies', label: 'Competitor Companies Research' },
+                                        { id: 'emergingRoles', label: 'Emerging Job Roles' },
+                                        { id: 'geographicOpportunities', label: 'Geographic Opportunities' },
+                                        { id: 'demandSkills', label: 'High-Demand Skills' }
+                                    ]
+                                },
+                                {
+                                    id: 'alternativePaths',
+                                    label: 'Alternative Career Paths',
+                                    children: [
+                                        { id: 'freelancing', label: 'Freelancing' },
+                                        { id: 'consulting', label: 'Consulting' },
+                                        { id: 'entrepreneurship', label: 'Entrepreneurship / Startup' },
+                                        { id: 'digitalMarketing', label: 'Digital Marketing' },
+                                        { id: 'contentCreation', label: 'Content Creation' },
+                                        { id: 'teaching', label: 'Online Teaching / Tutoring' },
+                                        { id: 'competitiveExams', label: 'Competitive Exams (Govt Jobs)' }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id: 'currentJob',
+                            label: 'Current Job'
+                        }
+                    ]
+                },
+                {
+                    id: 'personal',
+                    label: 'PERSONAL',
+                    children: [
+                        {
+                            id: 'activities',
+                            label: 'Activities',
+                            children: [
+                                { id: 'morning', label: 'Morning' },
+                                { id: 'evening', label: 'Evening' }
+                            ]
+                        },
+                        {
+                            id: 'things',
+                            label: 'Things',
+                            children: [
+                                { id: 'clothes', label: 'Clothes' },
+                                {
+                                    id: 'electronics',
+                                    label: 'Electronics',
+                                    children: [
+                                        { id: 'mobile', label: 'Mobile' },
+                                        { id: 'laptop', label: 'Laptop' }
+                                    ]
+                                },
+                                { id: 'bike', label: 'Bike' },
+                                { id: 'books', label: 'Books' },
+                                { id: 'cd', label: 'CD/DVD' }
+                            ]
+                        },
+                        {
+                            id: 'religious',
+                            label: 'Religious (Islam)',
+                            children: [
+                                { id: 'namaz', label: 'Namaz' },
+                                { id: 'dua', label: 'Dua' },
+                                { id: 'fasting', label: 'Fasting' },
+                                { id: 'zakat', label: 'Zakat' }
+                            ]
+                        },
+                        {
+                            id: 'relationships',
+                            label: 'Relationships',
+                            children: [
+                                { id: 'grandparents', label: 'Grandparents (Sunita and Shekhar)' },
+                                { id: 'parents', label: 'Parents (Shaffi and Shakeera)' },
+                                { id: 'siblings', label: 'Siblings (Arif, Asif)' },
+                                { id: 'extended', label: 'Extended Family' },
+                                { id: 'inlaws', label: 'In-laws' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'time',
+                    label: 'TIME MANAGEMENT',
+                    children: [
+                        {
+                            id: 'myCalendar',
+                            label: 'My Calendar',
+                            children: [
+                                {
+                                    id: 'day',
+                                    label: 'Day',
+                                    children: [
+                                        { id: 'hour', label: 'Hour' },
+                                        { id: 'min', label: 'Minute' },
+                                        { id: 'sec', label: 'Second' }
+                                    ]
+                                },
+                                {
+                                    id: 'week',
+                                    label: 'Week',
+                                    children: [
+                                        { id: 'sun', label: 'Sunday' },
+                                        { id: 'mon', label: 'Monday' },
+                                        { id: 'tue', label: 'Tuesday' },
+                                        { id: 'wed', label: 'Wednesday' },
+                                        { id: 'thrus', label: 'Thursday' },
+                                        { id: 'friday', label: 'Friday' },
+                                        { id: 'sat', label: 'Saturday' }
+                                    ]
+                                },
+                                {
+                                    id: 'month',
+                                    label: 'Month',
+                                    children: [
+                                        { id: 'week1', label: 'Week 1' },
+                                        { id: 'week2', label: 'Week 2' },
+                                        { id: 'week3', label: 'Week 3' },
+                                        { id: 'week4', label: 'Week 4' }
+                                    ]
+                                },
+                                {
+                                    id: 'year',
+                                    label: 'Year',
+                                    children: [
+                                        { id: 'winter', label: 'Winter (Dec, Jan, Feb)' },
+                                        { id: 'summer', label: 'Summer (Mar, Apr, May)' },
+                                        { id: 'rain', label: 'Rain (June, July, Aug)' },
+                                        { id: 'autumn', label: 'Autumn (Sep, Oct, Nov)' }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'financial',
+                    label: 'FINANCIAL',
+                    children: [
+                        { id: 'income', label: 'Income' },
+                        { id: 'expenditure', label: 'Expenditure' },
+                        { id: 'savings', label: 'Savings' }
+                    ]
+                },
+                {
+                    id: 'places',
+                    label: 'PLACES',
+                    children: [
+                        { id: 'home', label: 'Home' },
+                        { id: 'library', label: 'Library' },
+                        { id: 'masjid', label: 'Masjid' },
+                        { id: 'office', label: 'Office' }
+                    ]
+                }
+            ]
+        };
+
+        var expandedNodes = {
+            root: true,
+            work: true,
+            jobSearch: true,
+            modernStrategies: true,
+            platforms: true,
+            networking: true,
+            application: true,
+            tracking: true
+        };
+
+        function toggleNode(nodeId) {
+            expandedNodes[nodeId] = !expandedNodes[nodeId];
+            renderMindMap();
+        }
+
+        function expandAll() {
+            var allIds = {};
+            function collectIds(node) {
+                allIds[node.id] = true;
+                if (node.children) {
+                    node.children.forEach(collectIds);
+                }
+            }
+            collectIds(mindMapData);
+            expandedNodes = allIds;
+            renderMindMap();
+        }
+
+        function collapseAll() {
+            expandedNodes = { root: true };
+            renderMindMap();
+        }
+
+        function createNodeElement(node, level) {
+            var hasChildren = node.children && node.children.length > 0;
+            var isExpanded = expandedNodes[node.id];
+            var colorClass = 'color-' + (level % 8);
+
+            var html = '<div class="node">';
+            html += '<div class="node-content">';
+
+            if (hasChildren) {
+                html += '<button class="toggle-btn" onclick="toggleNode(\'' + node.id + '\')">';
+                html += '<svg class="toggle-icon ' + (isExpanded ? 'expanded' : '') + '" viewBox="0 0 16 16" fill="currentColor">';
+                html += '<path d="M5.5 3l5 5-5 5V3z"/>';
+                html += '</svg>';
+                html += '</button>';
+            } else {
+                html += '<span style="width: 24px;"></span>';
+            }
+
+            html += '<div class="node-label ' + colorClass + ' ' + (level === 0 ? 'level-0' : '') + '">' + node.label + '</div>';
+            html += '</div>';
+
+            if (hasChildren && isExpanded) {
+                html += '<div class="children expanded">';
+                node.children.forEach(function(child) {
+                    html += createNodeElement(child, level + 1);
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function renderMindMap() {
+            var container = document.getElementById('mindmap');
+            container.innerHTML = createNodeElement(mindMapData, 0);
+        }
+
+        renderMindMap();
+    </script>
+    </nav>
+
+    <!-- Main content from template_index.html merged -->
+    <section class="card">
+      <h3>&nbsp;</h3>
+            <p data-path-to-node="8,1">&nbsp;</p>
+    </section>
+  </main>
+
+  <!-- CLEAN BOTTOM DOCK (#navbar2)
+       This is the unified, professional quick-access area placed ~25% from bottom (positioning and styling handled in myself.css).
+       The legacy right-side link list from the original index has been removed (not included here) to avoid clutter and duplicate single-page content.
+       The three links explicitly removed from the dock per request are not present: "mysql datab", "atlas", "MY TOMCAT".
+  -->
+  <div id="navbar2" aria-label="Quick-access dock">
+    
+	<a class="btn btn--blue btn--sm keep-button" href="http://127.0.0.1:8080/apex/f?p=4950:1:4236576548986068"_blank" rel="noopener">DataBase</a>
+	<a class="btn btn--blue btn--sm keep-button" href="D:\selforg(nb)\selforg_new_01_05_2025\HTML5Application\public_html\self organisation (1)\DATABASEPROGRAM\db_application_dbms.rar">DataBase</a>
+    <a class="btn btn--gold btn--sm keep-button" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener">My Calendar</a>
+    <a class="btn btn--purple btn--sm keep-button" href="../financial/moneyview.jar" target="_blank" rel="noopener">Money (Offline)</a>
+    <a class="btn btn--blue btn--sm keep-button" href="https://www.kotak.com/en/home.html" target="_blank" rel="noopener">Money (Kotak)</a>
+    <a class="btn btn--red btn--sm keep-button" href="../Time management/timetable software/rachota_24.jar" target="_blank" rel="noopener">Timetable App</a>
+    <a class="btn btn--purple btn--sm keep-button" href="explorefiles/explorer/dist/explorer.jar" target="_blank" rel="noopener">Explorer</a>
+    <a class="btn btn--gold btn--sm keep-button" href="notepadd app/Java-Edit.jar" target="_blank" rel="noopener">Notepad (DB)</a>
+    <a class="btn btn--blue btn--sm keep-button" href="pomodoro/pomodoro.jar" target="_blank" rel="noopener">Pomodoro</a>
+    <a class="btn btn--purple btn--sm keep-button" href="../search program/Searchmonkey.jar" target="_blank" rel="noopener">Search Docs</a>
+  </div>
+
+  <footer class="center small">
+    <p>Unified template </p>
+  </footer>
+
+  <script type="text/javascript">
+    // Initialize Spry MenuBar widget if Spry is available (legacy)
+    try {
+      if (typeof Spry !== "undefined" && Spry.Widget && Spry.Widget.MenuBar) {
+        var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"SpryAssets/SpryMenuBarDownHover.gif", imgRight:"SpryAssets/SpryMenuBarRightHover.gif"});
+      }
+    } catch(e) {
+      // Spry not available; top menu still supports hover-based dropdowns via CSS.
+      console.warn('Spry MenuBar not initialized (Spry assets may be missing). CSS hover dropdowns remain functional.');
+    }
+
+    // Accessibility & clean-up script:
+    // Remove any accidental duplicate single-page links inside the document (defensive).
+    (function tidy() {
+      var bannedLabels = ["mysql datab", "atlas", "MY TOMCAT"];
+      var anchors = document.querySelectorAll('a');
+      anchors.forEach(function(a){
+        if (!a.textContent) return;
+        var t = a.textContent.trim();
+        if (bannedLabels.indexOf(t) !== -1) {
+          // Remove the node to ensure it's not visible or used accidentally
+          a.remove();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
